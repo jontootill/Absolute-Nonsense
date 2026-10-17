@@ -1,0 +1,366 @@
+/* ==========================================================================
+   ABSOLUTE NONSENSE: GLOBAL STYLES & RESET
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: #f4f4f9;
+  color: #1e1e24;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 520px;
+  min-height: 90vh;
+  background: #ffffff;
+  border: 3px solid #1e1e24;
+  border-radius: 24px;
+  box-shadow: 8px 8px 0px #1e1e24;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ==========================================================================
+   SCREEN STATE MANAGEMENT
+   ========================================================================== */
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 2rem 1.5rem;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  width: 100%;
+}
+
+.screen.hidden {
+  display: none !important;
+  opacity: 0;
+  transform: scale(0.96);
+  pointer-events: none;
+}
+
+/* Dark Interstitial Screen Theme */
+.screen.dark-theme {
+  background-color: #2b1b54;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   TYPOGRAPHY & BUTTONS
+   ========================================================================== */
+.bounce-title {
+  font-size: 2.8rem;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: #2b1b54;
+  letter-spacing: -1px;
+}
+
+.tagline {
+  text-align: center;
+  color: #555;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.badge {
+  background-color: #ffde59;
+  color: #1e1e24;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  padding: 0.35rem 0.8rem;
+  border-radius: 20px;
+  border: 2px solid #1e1e24;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+.badge-subtle {
+  background-color: #e2e8f0;
+  color: #4a5568;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.btn-primary, .btn-secondary, .btn-accent {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  border-radius: 16px;
+  border: 3px solid #1e1e24;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  margin-top: 0.75rem;
+}
+
+.btn-primary {
+  background-color: #ff5757;
+  color: #ffffff;
+  box-shadow: 4px 4px 0px #1e1e24;
+}
+
+.btn-secondary {
+  background-color: #ffffff;
+  color: #1e1e24;
+  box-shadow: 3px 3px 0px #1e1e24;
+}
+
+.btn-accent {
+  background-color: #00c2cb;
+  color: #ffffff;
+  box-shadow: 4px 4px 0px #1e1e24;
+}
+
+.btn-primary:active, .btn-secondary:active, .btn-accent:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #1e1e24;
+}
+
+/* ==========================================================================
+   SCREEN 1: LOBBY
+   ========================================================================== */
+.lobby-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.scenario-card {
+  background: #fff9db; /* Vibrant, eye-catching comic-book yellow tint */
+  border: 3px solid #1e1e24;
+  border-radius: 18px;
+  padding: 1.5rem;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 1.25rem;
+  box-shadow: 6px 6px 0px #1e1e24; /* Harder, punchier shadow */
+}
+
+.scenario-card .badge {
+  background-color: #ff5757; /* Make the badge pop with accent color */
+  color: #ffffff;
+  margin-bottom: 0.6rem;
+}
+
+.scenario-card h2 {
+  font-size: 1.7rem; /* Larger, bolder title */
+  font-weight: 900;
+  color: #2b1b54;
+  margin: 0.5rem 0;
+  letter-spacing: -0.5px;
+}
+
+.scenario-card p {
+  font-size: 1.05rem; /* Slightly larger, clearer description */
+  color: #333333;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  line-height: 1.4;
+}
+
+.mode-select {
+  width: 100%;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mode-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.custom-select {
+  padding: 0.8rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border: 3px solid #1e1e24;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 3px 3px 0px #1e1e24;
+  outline: none;
+}
+
+/* ==========================================================================
+   SCREEN 2: CARD SELECTION
+   ========================================================================== */
+.game-header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.game-header p {
+  font-weight: 600;
+  color: #666;
+  margin-top: 0.4rem;
+}
+
+.cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.choice-card {
+  background: #ffffff;
+  border: 3px solid #1e1e24;
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 4px 4px 0px #1e1e24;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  text-align: left;
+}
+
+.choice-card:nth-child(1) { transform: rotate(-1deg); }
+.choice-card:nth-child(2) { transform: rotate(1deg); }
+.choice-card:nth-child(3) { transform: rotate(-0.5deg); }
+
+.choice-card:hover, .choice-card:active {
+  transform: translateY(-3deg) scale(1.02) rotate(0deg);
+  box-shadow: 6px 6px 0px #1e1e24;
+  background-color: #fffdf0;
+}
+
+.card-tone-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #ff5757;
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+.card-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   SCREEN 3: PASS THE PHONE (INTERSTITIAL)
+   ========================================================================== */
+.pass-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.icon-bounce {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: bounce 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-12px); }
+}
+
+.pass-content h2 {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #ffde59;
+  margin-bottom: 0.5rem;
+}
+
+.pass-content p {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ==========================================================================
+   SCREEN 4: THE BIG REVEAL
+   ========================================================================== */
+.reveal-header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.scenario-subtitle {
+  font-size: 0.9rem;
+  color: #777;
+  font-weight: 600;
+}
+
+.transcript-box {
+  width: 100%;
+  flex: 1;
+  background: #f8f9fa;
+  border: 3px solid #1e1e24;
+  border-radius: 16px;
+  padding: 1rem;
+  overflow-y: auto;
+  max-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05);
+}
+
+.transcript-line {
+  background: #ffffff;
+  border: 2px solid #1e1e24;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  box-shadow: 2px 2px 0px #1e1e24;
+  animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.transcript-line.act-divider {
+  background: #ffde59;
+  text-align: center;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  padding: 0.4rem;
+}
+
+.speaker-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.speaker-p1 { color: #ff5757; }
+.speaker-p2 { color: #00c2cb; }
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.action-tray {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}

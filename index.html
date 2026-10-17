@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Absolute Nonsense: The Accidental Story Game</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <main class="app-container">
+
+    <!-- ========================================== -->
+    <!-- SCREEN 1: LOBBY & SCENARIO SELECTION       -->
+    <!-- ========================================== -->
+    <section id="screen-lobby" class="screen active">
+      <div class="lobby-content">
+        <h1 class="bounce-title">🎭 Absolute Nonsense</h1>
+        <p class="tagline">The pass-and-play game of blind choices and terrible stories.</p>
+        
+        <div class="scenario-card">
+          <span class="badge">Today's Stage</span>
+          <h2 id="scenario-title">Loading Stage...</h2>
+          <p id="scenario-desc">Loading scenario description...</p>
+          <button id="btn-reroll-scenario" class="btn-secondary">🎲 Reroll Scenario</button>
+        </div>
+
+        <div class="mode-select">
+          <label for="mode-dropdown" class="mode-label">Game Length:</label>
+          <select id="mode-dropdown" class="custom-select">
+            <option value="quick">⚡ Quick-Fire (4 Turns)</option>
+            <option value="standard" selected>📜 Standard Play (6 Turns)</option>
+            <option value="epic">🔥 Epic Saga (8 Turns + Wildcard)</option>
+          </select>
+        </div>
+        
+<div class="player-name-inputs">
+  <input type="text" id="p1-name" placeholder="Player 1 Name" value="Player 1">
+  <input type="text" id="p2-name" placeholder="Player 2 Name" value="Player 2">
+</div>
+        <button id="btn-start-game" class="btn-primary">Start Game →</button>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 2: CARD SELECTION VIEW             -->
+    <!-- ========================================== -->
+    <section id="screen-game" class="screen hidden">
+      <header class="game-header">
+        <span id="act-badge" class="badge-subtle">Act 1</span>
+        <span id="player-badge" class="badge">Player 1's Turn</span>
+        <p id="turn-instruction">Pick your line wisely...</p>
+      </header>
+
+      <!-- Container where 3 randomized choice cards get injected -->
+      <div id="cards-container" class="cards-grid">
+        <!-- Injected dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 3: PASS THE PHONE (INTERSTITIAL)    -->
+    <!-- ========================================== -->
+    <section id="screen-pass" class="screen hidden dark-theme">
+      <div class="pass-content">
+        <div class="icon-bounce">🙈</div>
+        <h2 id="pass-title">NO PEEKING!</h2>
+        <p id="pass-message">Pass the device to Player 2.</p>
+        <button id="btn-ready" class="btn-primary">I am Ready →</button>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 4: THE BIG REVEAL (SCRIPT READ)     -->
+    <!-- ========================================== -->
+    <section id="screen-reveal" class="screen hidden">
+      <header class="reveal-header">
+        <h2>📜 The Transcript</h2>
+        <p id="reveal-scenario-name" class="scenario-subtitle"></p>
+      </header>
+
+      <!-- The dynamic transcript box -->
+      <div id="transcript-container" class="transcript-box">
+        <!-- Lines reveal line-by-line here -->
+      </div>
+
+      <!-- Control buttons for line reveals and game flow -->
+      <div class="reveal-controls">
+        <button id="btn-next-line" class="btn-primary">Next Line 🎭</button>
+        <div id="end-action-buttons" class="action-tray hidden">
+          <button id="btn-continue-story" class="btn-accent">Continue Story (Act 2) ⏩</button>
+          <button id="btn-copy-script" class="btn-secondary">Copy Script 📋</button>
+          <button id="btn-new-game" class="btn-secondary">New Game 🎲</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- CARD DATA SCRIPTS (Role Files)            -->
+  <!-- ========================================== -->
+  <!-- Load card decks FIRST -->
+<script src="cards/openings.js"></script>
+<script src="cards/questions.js"></script>
+<script src="cards/escalations.js"></script>
+<script src="cards/consequences.js"></script>
+<script src="cards/resolutions.js"></script>
+<script src="cards/apologies.js"></script>
+<script src="cards/flashbacks.js"></script>
+<script src="cards/plot_twists.js"></script>
+<script src="cards/internal_monologues.js"></script>
+<script src="cards/third_party_interruptions.js"></script>
+
+<!-- Load game engine LAST -->
+<script src="game.js"></script>
