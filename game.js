@@ -226,148 +226,172 @@ const SCENARIOS = [
   }
 ];
 
+// --- 2. GAME STATE VARIABLES & ANTI-REPETITION MEMORY ---
+let currentScenario = null;
+let activePlayer = 1; // 1 or 2
+let currentTurnIndex = 0;
+// A tight 6-turn single-act structure with built-in wildcards
+let turnSequence = ["opening", "question", "escalation", "wildcard", "consequence", "resolution"];
+let fullTranscript = [];
+let revealedLineIndex = 0;
+let playerNames = { 1: "Player 1", 2: "Player 2" };
+let lastChosenTone = null; // Stores preceding turn tone for card option chaining
+
+// Anti-Repetition Tracking Sets
+let usedCards = new Set();
+let usedVerbs = new Set();
+let usedObjects = new Set();
+
+// --- 3. EXPANDED GLOBAL ABSURD OBJECTS & TONE VERBS ---
+const RANDOM_GLOBAL_OBJECTS = [
+  "a squeaky rubber duck", "a half-eaten pork pie", "a unicycle pedal",
+  "a mysterious jar of pickled eggs", "a slightly damp kazoo", "a plastic flamingo",
+  "a singular garden clog", "a miniature disco ball", "a tube of garlic paste",
+  "a velvet bow tie", "a vintage bicycle pump", "a half-peeled banana",
+  "a glowing neon maraca", "a tin of sardines", "a stray bingo dabber"
+];
+
+const FALLBACK_OBJECTS = ["the nearest item", "a mysterious object on the table", "the furniture"];
+
 const TONE_VERBS = {
   mundane: [
     "sighs deeply and examines [object].",
     "adjusts their glasses and fiddles with [object].",
     "stares blankly at [object] for a long, uncomfortable moment.",
     "absentmindedly taps their fingers against [object].",
-    "clears their throat and gestures vaguely toward [object]."
+    "clears their throat and gestures vaguely toward [object].",
+    "polishes [object] thoroughly with the sleeve of their jumper.",
+    "carefully places [object] on the exact center of the table.",
+    "squints closely at [object], checking for noticeable dust.",
+    "checks their watch before setting down [object].",
+    "offers a tired nod while nudging [object] aside."
   ],
   dramatic_extreme: [
     "slams [object] onto the ground in absolute fury!",
     "gasps in terror, clutching [object] like a lifeline!",
     "points dramatically at [object] as if it holds an ancient curse!",
     "drops to their knees beside [object], crying out in anguish!",
-    "trembles violently while glaring directly at [object]!"
+    "trembles violently while glaring directly at [object]!",
+    "raises [object] high above their head in a heroic declaration!",
+    "stares into the middle distance, clutching [object] with white knuckles!",
+    "sweeps [object] off the surface with a sudden, violent motion!",
+    "clutches their chest in pure agony, staggering past [object]!",
+    "whispers a desperate prayer directly into [object]!"
   ],
   bureaucratic: [
     "pulls out a red pen to make a strict note on [object].",
     "clears their throat and taps their official clipboard against [object].",
     "inspects [object] carefully to check if it complies with Regulation 4B.",
     "adjusts their glasses, holding up [object] for formal review.",
-    "neatly aligns [object] before offering a cold, deadpan stare."
+    "neatly aligns [object] before offering a cold, deadpan stare.",
+    "stamps [object] with an official-looking red ink pad.",
+    "cross-references [object] against a thick laminated policy binder.",
+    "files a formal notice next to [object] without blinking.",
+    "adjusts their lanyard, holding [object] at arm's length.",
+    "measures [object] precise dimensions using a tiny plastic ruler."
   ],
   casual_indifference: [
     "shrugs, nonchalantly nudging [object] with their shoe.",
     "yawns openly while tossing [object] from hand to hand.",
     "leans back, puts their feet up near [object], and checks their phone.",
     "takes a slow sip of water while casually ignoring [object].",
-    "examines their fingernails, barely giving [object] a second glance."
+    "examines their fingernails, barely giving [object] a second glance.",
+    "flicks a tiny piece of lint off [object] with total boredom.",
+    "balances [object] on the tip of their finger while looking away.",
+    "takes a slow bite of food, offering [object] to nobody in particular.",
+    "stifles a yawn and spins [object] in a slow circle.",
+    "drags [object] across the floor with zero enthusiasm."
   ],
   unhinged_villain: [
     "slowly breaks into a sinister grin while stroking [object].",
     "whispers a terrifying threat directly into [object].",
     "cackles softly under their breath, tapping [object] rhythmically.",
     "steps forward into the shadows, clutching [object] tightly.",
-    "eye twitches slightly as they raise [object] into the light."
+    "eye twitches slightly as they raise [object] into the light.",
+    "polishes [object] while letting out a long, menacing breath.",
+    "draws a sharp circle around [object] with a permanent marker.",
+    "locks deadpan eye contact while slowly crushing [object].",
+    "offers an unsettling chuckle and points directly at [object].",
+    "tilts their head unnaturally far while holding up [object]."
   ],
   romantic: [
     "gazes lovingly into the middle distance, clutching [object] to their heart.",
     "sighs dreamily while gently tracing the edge of [object].",
     "wipes a single theatrical tear and offers [object] as a tribute.",
     "presses a hand to their chest, trembling with passion near [object].",
-    "steps closer, entirely ignoring everything except [object]."
+    "steps closer, entirely ignoring everything except [object].",
+    "places a delicate hand over [object], making a dramatic promise.",
+    "gazes softly into the empty air while presenting [object].",
+    "whispers a sweet poetic line directly to [object].",
+    "clutches [object] tightly as if it were a long-lost lover.",
+    "offers a passionate, heartfelt sigh while looking at [object]."
   ]
 };
 
+// Tone Compatibility Matrix (defines logical response tones)
+const TONE_FLOW_MAP = {
+  mundane: ["mundane", "bureaucratic", "casual_indifference"],
+  dramatic_extreme: ["dramatic_extreme", "unhinged_villain", "romantic"],
+  bureaucratic: ["bureaucratic", "mundane", "casual_indifference"],
+  casual_indifference: ["casual_indifference", "mundane", "bureaucratic"],
+  unhinged_villain: ["unhinged_villain", "dramatic_extreme", "bureaucratic"],
+  romantic: ["romantic", "dramatic_extreme", "mundane"]
+};
 
+// --- Conversational Connectors Dictionary ---
+const ROLE_CONNECTORS = {
+  question: ["Wait...", "Hold on...", "Seriously?", "Look, ", "Realistically speaking, ", "Hang on a second..."],
+  escalation: ["If that's your attitude, ", "Well, in response to that, ", "Listen to me very carefully: ", "Oh, so that's how it is? ", "You leave me no choice: ", "Look, "],
+  consequence: ["Because of that, ", "So as a direct result, ", "Great, now ", "And that is exactly why ", "Now look what happened: "],
+  resolution: ["Regardless of all that, ", "At the end of the day, ", "Look, in the end, ", "Either way, ", "So let's be crystal clear: ", "When all is said and done, "],
+  wildcard: ["Before you say anything else: ", "Wait, side note: ", "Interrupting for a second—", "Actually, "]
+};
 
-// Fallback objects if a scenario doesn't have an 'objects' array defined yet
-const FALLBACK_OBJECTS = ["the nearest item", "a mysterious object on the table", "the furniture"];
-
+// --- 4. ENGINE HELPER FUNCTIONS ---
 function generateStageDirection(scenario, tone) {
+  // 1. SELECT VERB WITH ANTI-REPETITION
   const verbList = TONE_VERBS[tone] || TONE_VERBS.casual_indifference;
-  const randomVerb = verbList[Math.floor(Math.random() * verbList.length)];
+  let availableVerbs = verbList.filter(v => !usedVerbs.has(v));
+  
+  if (availableVerbs.length === 0) {
+    verbList.forEach(v => usedVerbs.delete(v));
+    availableVerbs = [...verbList];
+  }
+  
+  const chosenVerb = availableVerbs[Math.floor(Math.random() * availableVerbs.length)];
+  usedVerbs.add(chosenVerb);
 
-  const objectList = (scenario && scenario.objects && scenario.objects.length > 0)
-    ? scenario.objects
-    : FALLBACK_OBJECTS;
-  const randomObject = objectList[Math.floor(Math.random() * objectList.length)];
+  // 2. SELECT OBJECT (60% Scenario-Specific, 40% Absurd Global)
+  const isAbsurdGlobal = Math.random() < 0.4;
+  const pool = (isAbsurdGlobal || !scenario || !scenario.objects || scenario.objects.length === 0)
+    ? RANDOM_GLOBAL_OBJECTS
+    : scenario.objects;
 
-  return randomVerb.replace("[object]", randomObject);
+  let availableObjects = pool.filter(o => !usedObjects.has(o));
+  if (availableObjects.length === 0) {
+    pool.forEach(o => usedObjects.delete(o));
+    availableObjects = [...pool];
+  }
+
+  const chosenObject = availableObjects[Math.floor(Math.random() * availableObjects.length)];
+  usedObjects.add(chosenObject);
+
+  // 3. COMBINE
+  return chosenVerb.replace("[object]", chosenObject);
 }
 
-// --- 2. GAME STATE VARIABLES ---
-let currentScenario = null;
-let currentAct = 1;
-let playerNames = { 1: "Player 1", 2: "Player 2" };
-let activePlayer = 1; // 1 or 2
-let currentTurnIndex = 0;
-let turnSequence = [];
-let fullTranscript = []; // Holds { act, player, tone, text }
-let revealedLineIndex = 0;
-
-// --- 3. CONVERSATIONAL CONNECTORS DICTIONARY ---
-const ROLE_CONNECTORS = {
-  // Questions react to the opening or previous statement
-  question: [
-    "Wait...",
-    "Hold on...",
-    "Seriously?",
-    "Look, ",
-    "Realistically speaking, ",
-    "Hang on a second..."
-  ],
-
-  // Escalations build off the previous answer/question
-  escalation: [
-    "If that's your attitude, ",
-    "Well, in response to that, ",
-    "Listen to me very carefully: ",
-    "Oh, so that's how it is? ",
-    "You leave me no choice: ",
-    "Look, "
-  ],
-
-  // Consequences focus on the immediate effect
-  consequence: [
-    "Because of that, ",
-    "So as a direct result, ",
-    "Great, now ",
-    "And that is exactly why ",
-    "Now look what happened: "
-  ],
-
-  // Resolutions summarize or make a final stand
-  resolution: [
-    "Regardless of all that, ",
-    "At the end of the day, ",
-    "Look, in the end, ",
-    "Either way, ",
-    "So let's be crystal clear: ",
-    "When all is said and done, "
-  ],
-
-  // Wildcards interrupt or shift focus
-  wildcard: [
-    "Before you say anything else: ",
-    "Wait, side note: ",
-    "Interrupting for a second—",
-    "Actually, "
-  ]
-};
-
-/**
- * Formats a card text by attaching a role-appropriate connector prefix.
- * @param {Object} card - The card object { role, text, tone, id }
- * @param {boolean} useConnector - Optional flag to toggle connectors on/off
- * @returns {string} Formatted line text ready for display and transcript
- */
 function formatDialogueLine(card, useConnector = true) {
-  // Openings establish the scene, so they don't need a leading connector
   if (!useConnector || card.role === "opening") {
     return card.text;
   }
 
-  // Get available prefixes for the role (or fallback to wildcard)
   const prefixes = ROLE_CONNECTORS[card.role] || ROLE_CONNECTORS.wildcard;
   const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
   
   return `${randomPrefix}${card.text}`;
 }
 
-// --- 4. DOM ELEMENTS ---
+// --- 5. DOM ELEMENTS ---
 const screens = {
   lobby: document.getElementById("screen-lobby"),
   game: document.getElementById("screen-game"),
@@ -375,7 +399,7 @@ const screens = {
   reveal: document.getElementById("screen-reveal")
 };
 
-// --- 5. INITIALIZATION & EVENT LISTENERS ---
+// --- 6. INITIALIZATION & EVENT LISTENERS ---
 document.addEventListener("DOMContentLoaded", () => {
   setupScenario();
   
@@ -383,12 +407,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-start-game").addEventListener("click", startGame);
   document.getElementById("btn-ready").addEventListener("click", revealTurn);
   document.getElementById("btn-next-line").addEventListener("click", revealNextLine);
-  document.getElementById("btn-continue-story").addEventListener("click", continueStory);
   document.getElementById("btn-copy-script").addEventListener("click", copyScript);
   document.getElementById("btn-new-game").addEventListener("click", resetToLobby);
 });
 
-// --- 6. LOBBY & SETUP LOGIC ---
+// --- 7. LOBBY & SETUP LOGIC ---
 function setupScenario() {
   const randomIndex = Math.floor(Math.random() * SCENARIOS.length);
   currentScenario = SCENARIOS[randomIndex];
@@ -407,36 +430,29 @@ function showScreen(screenId) {
 }
 
 function startGame() {
-  currentAct = 1;
-  activePlayer = 1;
   currentTurnIndex = 0;
+  activePlayer = 1;
   fullTranscript = [];
+  lastChosenTone = null;
+
+  // Clear anti-repetition memory for a fresh game session
+  usedCards.clear();
+  usedVerbs.clear();
+  usedObjects.clear();
   
-  // Grab custom names from inputs (with fallbacks if left blank)
-  const p1Val = document.getElementById("p1-name").value.trim();
-  const p2Val = document.getElementById("p2-name").value.trim();
+  // Grab player names from lobby
+  const p1Val = document.getElementById("p1-name") ? document.getElementById("p1-name").value.trim() : "";
+  const p2Val = document.getElementById("p2-name") ? document.getElementById("p2-name").value.trim() : "";
   playerNames[1] = p1Val !== "" ? p1Val : "Player 1";
   playerNames[2] = p2Val !== "" ? p2Val : "Player 2";
 
-  const mode = document.getElementById("mode-dropdown").value;
-  turnSequence = buildTurnSequence(mode);
+  turnSequence = ["opening", "question", "escalation", "wildcard", "resolution"];
   
   showScreen("game");
   loadTurn();
 }
 
-function buildTurnSequence(mode) {
-  if (mode === "quick") {
-    return ["opening", "question", "escalation", "resolution"];
-  } else if (mode === "epic") {
-    return ["opening", "question", "escalation", "wildcard", "consequence", "wildcard", "escalation", "resolution"];
-  } else {
-    // Standard (6 turns)
-    return ["opening", "question", "escalation", "consequence", "escalation", "resolution"];
-  }
-}
-
-// --- 7. DECK MASTER BUILDER ---
+// --- 8. DECK MASTER BUILDER & CARD CHAINING ---
 function getCardsForRole(role) {
   const decks = {
     opening: typeof openingCards !== "undefined" ? openingCards : [],
@@ -462,40 +478,60 @@ function getCardsForRole(role) {
 function getThreeChoices(role) {
   const deck = getCardsForRole(role);
   if (deck.length === 0) {
-    // Emergency placeholder if no cards exist yet
     return [
-      { role: role, tone: "Placeholder", text: "Line option A (Add cards to card JS file)" },
-      { role: role, tone: "Placeholder", text: "Line option B (Add cards to card JS file)" },
-      { role: role, tone: "Placeholder", text: "Line option C (Add cards to card JS file)" }
+      { role: role, tone: "mundane", text: "Line option A (Add cards to card JS file)" },
+      { role: role, tone: "dramatic_extreme", text: "Line option B (Add cards to card JS file)" },
+      { role: role, tone: "casual_indifference", text: "Line option C (Add cards to card JS file)" }
     ];
   }
 
-  const shuffled = [...deck].sort(() => 0.5 - Math.random());
+  // Filter out cards already played this session
+  let availableDeck = deck.filter(c => !usedCards.has(c.id || c.text));
+  if (availableDeck.length < 3) {
+    deck.forEach(c => usedCards.delete(c.id || c.text));
+    availableDeck = [...deck];
+  }
+
   const selected = [];
   const usedTones = new Set();
 
-  for (const card of shuffled) {
-    if (!usedTones.has(card.tone)) {
+  // 1. Check for Chained Tones if a preceding turn tone exists
+  if (lastChosenTone && TONE_FLOW_MAP[lastChosenTone]) {
+    const preferredTones = TONE_FLOW_MAP[lastChosenTone];
+    const matchingCards = availableDeck.filter(c => preferredTones.includes(c.tone));
+    
+    // Pick up to 2 cards matching the flow logic
+    const shuffledMatches = [...matchingCards].sort(() => 0.5 - Math.random());
+    for (const card of shuffledMatches) {
+      if (!usedTones.has(card.tone)) {
+        selected.push(card);
+        usedTones.add(card.tone);
+      }
+      if (selected.length === 2) break;
+    }
+  }
+
+  // 2. Fill remaining slot(s) with random cards (Wildcards/Unrelated Tones)
+  const remainingCards = availableDeck
+    .filter(c => !selected.includes(c))
+    .sort(() => 0.5 - Math.random());
+
+  for (const card of remainingCards) {
+    if (!usedTones.has(card.tone) || selected.length < 3) {
       selected.push(card);
       usedTones.add(card.tone);
     }
     if (selected.length === 3) break;
   }
 
-  // Fill up if not enough unique tones
-  while (selected.length < 3 && shuffled.length > selected.length) {
-    const fallback = shuffled.find(c => !selected.includes(c));
-    if (fallback) selected.push(fallback);
-  }
-
   return selected;
 }
 
-// --- 8. TURN PLAY LOGIC ---
+// --- 9. TURN PLAY LOGIC ---
 function loadTurn() {
   const currentRole = turnSequence[currentTurnIndex];
   
-  document.getElementById("act-badge").textContent = `Act ${currentAct}`;
+  if (document.getElementById("act-badge")) document.getElementById("act-badge").textContent = `Single Act`;
   document.getElementById("player-badge").textContent = `${playerNames[activePlayer]}'s Turn`;
   document.getElementById("turn-instruction").textContent = `Pick a card below...`;
 
@@ -505,35 +541,30 @@ function loadTurn() {
   const choices = getThreeChoices(currentRole);
 
   choices.forEach(card => {
-    // Ensure the card object explicitly carries its role for the formatter
     card.role = currentRole;
-
-    // Generate the conversational text variant for selection
     const formattedText = formatDialogueLine(card);
 
     const cardEl = document.createElement("div");
     cardEl.className = "choice-card";
-    
-    // Notice the tone label has been omitted from innerHTML below:
     cardEl.innerHTML = `
       <p class="card-text">"${formattedText}"</p>
     `;
     
-    // Save the formatted version when selected
     cardEl.addEventListener("click", () => selectCard(card, formattedText));
     cardsContainer.appendChild(cardEl);
   });
 }
 
 function selectCard(card, formattedText) {
-  // Generate dynamic stage direction based on current scenario and card tone
+  usedCards.add(card.id || card.text);
+  lastChosenTone = card.tone;
+
   const actionText = generateStageDirection(currentScenario, card.tone);
 
   fullTranscript.push({
-    act: currentAct,
     player: activePlayer,
     tone: card.tone,
-    action: actionText, // <--- Saves the action beat
+    action: actionText,
     text: formattedText
   });
 
@@ -567,7 +598,7 @@ function revealTurn() {
   loadTurn();
 }
 
-// --- 9. REVEAL & TRANSCRIPT LOGIC ---
+// --- 10. REVEAL & TRANSCRIPT LOGIC ---
 function startRevealPhase() {
   revealedLineIndex = 0;
   document.getElementById("reveal-scenario-name").textContent = `Scenario: ${currentScenario.title}`;
@@ -586,20 +617,12 @@ function revealNextLine() {
   
   if (revealedLineIndex < fullTranscript.length) {
     const item = fullTranscript[revealedLineIndex];
-    
-    // Add Act Header if first line of a new act
-    if (revealedLineIndex === 0 || fullTranscript[revealedLineIndex - 1].act !== item.act) {
-      const divider = document.createElement("div");
-      divider.className = "transcript-line act-divider";
-      divider.textContent = `--- ACT ${item.act} ---`;
-      container.appendChild(divider);
-    }
 
     const lineEl = document.createElement("div");
     lineEl.className = "transcript-line";
     
     const speakerClass = item.player === 1 ? "speaker-p1" : "speaker-p2";
-    const currentName = playerNames[item.player]; // Get custom name
+    const currentName = playerNames[item.player];
     
     lineEl.innerHTML = `
       <span class="speaker-tag ${speakerClass}">${currentName}</span>
@@ -619,27 +642,10 @@ function revealNextLine() {
   }
 }
 
-function continueStory() {
-  currentAct++;
-  // Extension sequence for Act 2+
-  turnSequence = ["escalation", "wildcard", "consequence", "resolution"];
-  currentTurnIndex = 0;
-  
-  // Player 2 initiates Act 2
-  activePlayer = 2;
-  
-  triggerPassScreen();
-}
-
 function copyScript() {
   let textOutput = `🎭 ABSOLUTE NONSENSE TRANSCRIPT\nScenario: ${currentScenario.title}\n\n`;
   
-  let lastAct = 0;
   fullTranscript.forEach(line => {
-    if (line.act !== lastAct) {
-      textOutput += `--- ACT ${line.act} ---\n`;
-      lastAct = line.act;
-    }
     const currentName = playerNames[line.player];
     textOutput += `${currentName}: *— ${currentName} ${line.action}*\n"${line.text}"\n\n`;
   });
